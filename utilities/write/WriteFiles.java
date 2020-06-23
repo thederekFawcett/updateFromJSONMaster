@@ -103,7 +103,9 @@ public class WriteFiles {
                     "\n\tpublic MovesCinematic[] getPokeMovesEliteCinematic() {\n\t\treturn POKEMOVESELITECINEMATIC;\n\t}" +
                     "\n\tpublic MovesCinematic[] getPokeMovesShadowCinematic() {\n\t\treturn POKEMOVESSHADOWCINEMATIC;\n\t}" +
                     "\n\tpublic MovesCinematic[] getPokeMovesPurifiedCinematic() {\n\t\treturn POKEMOVESPURIFIEDCINEMATIC;\n\t}" +
-                    "\n\tpublic Type[] getType() {\n\t\treturn TYPE;\n\t}";
+                    "\n\tpublic Type[] getType() {\n\t\treturn TYPE;\n\t}" +
+                    "\n\tpublic Type getType1() {\n\t\treturn TYPE[0];\n\t}" +
+                    "\n\tpublic Type getType2() {\n\t\treturn TYPE[1];\n\t}";
             writer.print(pokedexGettersAndSetters);
             writer.print("\n}");
 
@@ -740,15 +742,17 @@ public class WriteFiles {
                     "            while ((bytesRead = in.read(dataBuffer, 0, 1024)) != -1) {\n" +
                     "                fileOutputStream.write(dataBuffer, 0, bytesRead);\n" +
                     "            }\n" +
+                    "            \n" +
+                    "            // delete old/existing file\n" +
+                    "            if (fileExists) {\n" +
+                    "                File file = new File(existingFileName);\n" +
+                    "                if (file.delete()) {\n" +
+                    "                    System.out.println(\"\\n\\t\\t**Old Game Master deleted successfully**\\n\");\n" +
+                    "                }\n" +
+                    "            }\n" +
                     "        } catch (IOException e) {\n" +
                     "            System.out.println(\"\\nGame Master Check IO Exception!\\n\");\n" +
                     "            e.printStackTrace();\n" +
-                    "        }\n" +
-                    "        if (!fileExists) {\n" +
-                    "            File file = new File(existingFileName);\n" +
-                    "            if (file.delete()) {\n" +
-                    "                System.out.println(\"\\n\\t\\t**Old Game Master deleted successfully**\\n\");\n" +
-                    "            }\n" +
                     "        }\n" +
                     "    }\n" +
                     "}";

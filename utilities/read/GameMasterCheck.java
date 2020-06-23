@@ -117,15 +117,17 @@ public class GameMasterCheck {
             while ((bytesRead = in.read(dataBuffer, 0, 1024)) != -1) {
                 fileOutputStream.write(dataBuffer, 0, bytesRead);
             }
+            
+            // delete old/existing file
+            if (fileExists) {
+                File file = new File(existingFileName);
+                if (file.delete()) {
+                    System.out.println("\n\t\t**Old Game Master deleted successfully**\n");
+                }
+            }
         } catch (IOException e) {
             System.out.println("\nGame Master Check IO Exception!\n");
             e.printStackTrace();
-        }
-        if (!fileExists) {
-            File file = new File(existingFileName);
-            if (file.delete()) {
-                System.out.println("\n\t\t**Old Game Master deleted successfully**\n");
-            }
         }
     }
 }
