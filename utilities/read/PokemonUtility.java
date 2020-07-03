@@ -3,14 +3,14 @@
  */
 package pokemans.utilities.read;
 
-import java.util.ArrayList;
+import java.util.List;
 
 public class PokemonUtility {
 
   private boolean isLastInPoGoGen;
   private int pokeAttack, pokeDefense, pokeStamina;
   private String pokeDexNum, pokeGenNum, pokeName, pokeForm, pokeFamily;
-  private ArrayList<String> pokeType,
+  private List<String> pokeType,
       pokeMovesFast,
       pokeMovesCinematic,
       pokeMovesEliteFast,
@@ -28,13 +28,13 @@ public class PokemonUtility {
       String pokeName,
       String pokeForm,
       String pokeFamily,
-      ArrayList<String> pokeType,
-      ArrayList<String> pokeMovesFast,
-      ArrayList<String> pokeMovesCinematic,
-      ArrayList<String> pokeMovesEliteFast,
-      ArrayList<String> pokeMovesEliteCinematic,
-      ArrayList<String> pokeMovesShadowCinematic,
-      ArrayList<String> pokeMovesPurifiedCinematic) {
+      List<String> pokeType,
+      List<String> pokeMovesFast,
+      List<String> pokeMovesCinematic,
+      List<String> pokeMovesEliteFast,
+      List<String> pokeMovesEliteCinematic,
+      List<String> pokeMovesShadowCinematic,
+      List<String> pokeMovesPurifiedCinematic) {
     this.isLastInPoGoGen = isLastInPoGoGen;
     this.pokeAttack = pokeAttack;
     this.pokeDefense = pokeDefense;
@@ -132,11 +132,11 @@ public class PokemonUtility {
   }
 
   // type(s)
-  public ArrayList<String> getPokeType() {
+  public List<String> getPokeType() {
     return pokeType;
   }
 
-  public void setPokeType(ArrayList<String> pokeType) {
+  public void setPokeType(List<String> pokeType) {
     this.pokeType = pokeType;
   }
 
@@ -166,52 +166,52 @@ public class PokemonUtility {
   }
 
   // moves fast
-  public ArrayList<String> getPokeMovesFast() {
+  public List<String> getPokeMovesFast() {
     return pokeMovesFast;
   }
 
-  public void setPokeMovesFast(ArrayList<String> pokeMovesFast) {
+  public void setPokeMovesFast(List<String> pokeMovesFast) {
     this.pokeMovesFast = pokeMovesFast;
   }
 
-  public ArrayList<String> getPokeMovesEliteFast() {
+  public List<String> getPokeMovesEliteFast() {
     return pokeMovesEliteFast;
   }
 
-  public void setPokeMovesEliteFast(ArrayList<String> pokeMovesEliteFast) {
+  public void setPokeMovesEliteFast(List<String> pokeMovesEliteFast) {
     this.pokeMovesEliteFast = pokeMovesEliteFast;
   }
 
   // moves cinematic
-  public ArrayList<String> getPokeMovesCinematic() {
+  public List<String> getPokeMovesCinematic() {
     return pokeMovesCinematic;
   }
 
-  public void setPokeMovesCinematic(ArrayList<String> pokeMovesCinematic) {
+  public void setPokeMovesCinematic(List<String> pokeMovesCinematic) {
     this.pokeMovesCinematic = pokeMovesCinematic;
   }
 
-  public ArrayList<String> getPokeMovesEliteCinematic() {
+  public List<String> getPokeMovesEliteCinematic() {
     return pokeMovesEliteCinematic;
   }
 
-  public void setPokeMovesEliteCinematic(ArrayList<String> pokeMovesEliteCinematic) {
+  public void setPokeMovesEliteCinematic(List<String> pokeMovesEliteCinematic) {
     this.pokeMovesEliteCinematic = pokeMovesEliteCinematic;
   }
 
-  public ArrayList<String> getPokeMovesShadowCinematic() {
+  public List<String> getPokeMovesShadowCinematic() {
     return pokeMovesShadowCinematic;
   }
 
-  public void setPokeMovesShadowCinematic(ArrayList<String> pokeMovesShadowCinematic) {
+  public void setPokeMovesShadowCinematic(List<String> pokeMovesShadowCinematic) {
     this.pokeMovesShadowCinematic = pokeMovesShadowCinematic;
   }
 
-  public ArrayList<String> getPokeMovesPurifiedCinematic() {
+  public List<String> getPokeMovesPurifiedCinematic() {
     return pokeMovesPurifiedCinematic;
   }
 
-  public void setPokeMovesPurifiedCinematic(ArrayList<String> pokeMovesPurifiedCinematic) {
+  public void setPokeMovesPurifiedCinematic(List<String> pokeMovesPurifiedCinematic) {
     this.pokeMovesPurifiedCinematic = pokeMovesPurifiedCinematic;
   }
 

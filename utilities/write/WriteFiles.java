@@ -3,6 +3,7 @@
  */
 package pokemans.utilities.write;
 
+import pokemans.core.Type;
 import pokemans.utilities.read.MovesCinematicUtility;
 import pokemans.utilities.read.MovesFastUtility;
 import pokemans.utilities.read.PokemonUtility;
@@ -28,7 +29,7 @@ public class WriteFiles {
   private static StringBuilder builder0, builder1;
 
   // write Pokedex
-  public static void writePokedexEnum(ArrayList<PokemonUtility> pokemonUtilityList) {
+  public static void writePokedexEnum(List<PokemonUtility> pokemonUtilityList) {
     try {
       writer = new PrintWriter("src\\pokemans\\core\\Pokedex.java");
 
@@ -43,6 +44,7 @@ public class WriteFiles {
               + "\t\tprivate final MovesCinematic[] POKEMOVESCINEMATIC, POKEMOVESELITECINEMATIC, POKEMOVESSHADOWCINEMATIC, POKEMOVESPURIFIEDCINEMATIC;\n"
               + "\t\tprivate final Type[] TYPE;\n";
 
+      // write list of all dex entries (eg BULBASAUR(Generation1.BULBASAUR))
       String checkDexNum = "1";
       for (PokemonUtility pc : pokemonUtilityList) {
         builder1 =
@@ -67,32 +69,9 @@ public class WriteFiles {
         checkDexNum = pc.getPokeDexNum();
       }
 
-      // writes "main chunk" of enum. Lists each poke and info
-      for (PokemonUtility enumPoke : pokemonUtilityList) {
-        boolean lastEntry = false;
-        // Boolean alreadyWritten = switchGen(enumPoke.getPokeName());
-        boolean alreadyWritten = checkIfGenStartWritten(enumPoke.getPokeGenNum());
-
-        if (alreadyWritten) {
-          writer.print("\n\tprivate enum Generation" + enumPoke.getPokeGenNum() + " {\n");
-          writePokedexClassEnumAllPokes(enumPoke, lastEntry);
-        } else {
-          if (enumPoke.getIsLastInPoGoGen()) {
-            lastEntry = true;
-            writePokedexClassEnumAllPokes(enumPoke, lastEntry);
-            printPokedexVariablesAndConstructor(enumPoke.getPokeGenNum(), pokedexVariables);
-          } else {
-            lastEntry = enumPoke == pokemonUtilityList.get(pokemonUtilityList.size() - 1);
-            writePokedexClassEnumAllPokes(enumPoke, lastEntry);
-            if (lastEntry) {
-              printPokedexVariablesAndConstructor(enumPoke.getPokeGenNum(), pokedexVariables);
-            }
-          }
-        }
-      }
       writer.print(pokedexVariables);
 
-      // write bottom-of-file constructors for each Gen (ie - Generation1, Generation2, etc)
+      // write constructors for each Gen (ie - Generation1, Generation2, etc)
       firstOfEachGen.clear();
       for (PokemonUtility enumPoke : pokemonUtilityList) {
         // boolean alreadyWritten = switchGen(enumPoke.getPokeName());
@@ -178,7 +157,33 @@ public class WriteFiles {
               + "\t\t}\n"
               + "\t\treturn null;\n"
               + "\t}");
-      writer.print("\n}");
+
+      // writes "main chunk" of enum. Lists each poke and info
+      firstOfEachGen.clear();
+      for (PokemonUtility enumPoke : pokemonUtilityList) {
+        boolean lastEntry = false;
+        // Boolean alreadyWritten = switchGen(enumPoke.getPokeName());
+        boolean alreadyWritten = checkIfGenStartWritten(enumPoke.getPokeGenNum());
+
+        if (alreadyWritten) {
+          writer.print("\n\tprivate enum Generation" + enumPoke.getPokeGenNum() + " {\n");
+          writePokedexClassEnumAllPokes(enumPoke, lastEntry);
+        } else {
+          if (enumPoke.getIsLastInPoGoGen()) {
+            lastEntry = true;
+            writePokedexClassEnumAllPokes(enumPoke, lastEntry);
+            printPokedexVariablesAndConstructor(enumPoke.getPokeGenNum(), pokedexVariables);
+          } else {
+            lastEntry = enumPoke == pokemonUtilityList.get(pokemonUtilityList.size() - 1);
+            writePokedexClassEnumAllPokes(enumPoke, lastEntry);
+            if (lastEntry) {
+              printPokedexVariablesAndConstructor(enumPoke.getPokeGenNum(), pokedexVariables);
+            }
+          }
+        }
+      }
+
+      writer.print("}");
 
       writer.flush();
       writer.close();
@@ -216,11 +221,29 @@ public class WriteFiles {
     // write Moves Fast
     writer.print("new MovesFast[]{");
     for (int i = 0; i < pc.getPokeMovesFast().size(); i++) {
-      builder1 = new StringBuilder("MovesFast.").append(pc.getPokeMovesFast().get(i));
-      if ((i + 1) < pc.getPokeMovesFast().size()) {
-        writer.print(builder1.append(", "));
-      } else {
-        writer.print(builder1.append("}, "));
+      if (!pc.getPokeMovesFast().get(i).contains("HIDDEN_P")) {
+        builder1 = new StringBuilder("MovesFast.").append(pc.getPokeMovesFast().get(i));
+        if (i != (pc.getPokeMovesFast().size() - 1)) {
+          writer.print(builder1.append(", "));
+        } else {
+          writer.print(builder1.append("}, "));
+        }
+
+      } else if (pc.getPokeMovesFast().get(i).contains("HIDDEN_P")) {
+        for (Type type : Type.values()) {
+          if (!type.getTYPENAME().contains("NORM")) {
+            builder1 =
+                new StringBuilder("MovesFast.HIDDEN_POWER_")
+                    .append(type.getTYPENAME().substring(13))
+                    .append("_FAST");
+            if (!type.getTYPENAME().equals("POKEMON_TYPE_WATER")) {
+              writer.print(builder1.append(", "));
+            }
+          }
+        }
+        if ((i == pc.getPokeMovesFast().size() - 1)) {
+          writer.print(builder1.append("}, "));
+        }
       }
     }
 
@@ -242,11 +265,28 @@ public class WriteFiles {
       writer.print(builder1);
     } else {
       for (int i = 0; i < pc.getPokeMovesEliteFast().size(); i++) {
-        builder1 = new StringBuilder("MovesFast.").append(pc.getPokeMovesEliteFast().get(i));
-        if ((i + 1) < pc.getPokeMovesEliteFast().size()) {
-          writer.print(builder1.append(", "));
-        } else {
-          writer.print(builder1.append("}, "));
+        if (!pc.getPokeMovesEliteFast().get(i).contains("HIDDEN_P")) {
+          builder1 = new StringBuilder("MovesFast.").append(pc.getPokeMovesEliteFast().get(i));
+          if ((i + 1) < pc.getPokeMovesEliteFast().size()) {
+            writer.print(builder1.append(", "));
+          } else {
+            writer.print(builder1.append("}, "));
+          }
+        } else if (pc.getPokeMovesEliteFast().get(i).contains("HIDDEN_P")) {
+          for (Type type : Type.values()) {
+            if (!type.getTYPENAME().contains("NORM")) {
+              builder1 =
+                  new StringBuilder("MovesFast.HIDDEN_POWER_")
+                      .append(type.getTYPENAME().substring(13))
+                      .append("_FAST");
+              if (!type.getTYPENAME().equals("POKEMON_TYPE_WATER")) {
+                writer.print(builder1.append(", "));
+              }
+            }
+          }
+          if ((i == pc.getPokeMovesEliteFast().size() - 1)) {
+            writer.print(builder1.append("}, "));
+          }
         }
       }
     }
@@ -430,10 +470,10 @@ public class WriteFiles {
         double dpe;
         if (MovesCinematicUtility.getPvpPower().get(writeCounter) > 0) {
           BigDecimal pvpDPE =
-              ((BigDecimal.valueOf(MovesCinematicUtility.getPvpPower().get(writeCounter)))
+              ((new BigDecimal(MovesCinematicUtility.getPvpPower().get(writeCounter).toString()))
                       .divide(
-                          BigDecimal.valueOf(
-                              MovesCinematicUtility.getPvpEnergy().get(writeCounter)),
+                          new BigDecimal(
+                              MovesCinematicUtility.getPvpEnergy().get(writeCounter).toString()),
                           8,
                           RoundingMode.DOWN))
                   .negate();
@@ -584,86 +624,44 @@ public class WriteFiles {
       for (int writeCounter = 1;
           writeCounter < MovesFastUtility.getMoveNum().size();
           writeCounter++) {
-        builder1 =
-            new StringBuilder(
-                MovesFastUtility.getMoveName().get(writeCounter)
-                    + "(FastMove."
-                    + MovesFastUtility.getMoveName().get(writeCounter)
-                    + ")");
-        if (writeCounter != (MovesFastUtility.getMoveNum().size() - 1)) {
-          builder1.append(",\n\t");
-        } else {
-          builder1.append(";\n");
+        if (!MovesFastUtility.getMoveName().get(writeCounter).equals("HIDDEN_POWER_FAST")) {
+          builder1 =
+              new StringBuilder(MovesFastUtility.getMoveName().get(writeCounter))
+                  .append("(FastMove.")
+                  .append(MovesFastUtility.getMoveName().get(writeCounter))
+                  .append(")");
+          if (writeCounter != (MovesFastUtility.getMoveNum().size() - 1)) {
+            builder1.append(",\n\t");
+          } else {
+            builder1.append(";\n");
+          }
+          writer.print(builder1);
+        } else if (MovesFastUtility.getMoveName().get(writeCounter).equals("HIDDEN_POWER_FAST")) {
+          for (Type type : Type.values()) {
+            String hpName = "HIDDEN_POWER_" + type.getTYPENAME().substring(13) + "_FAST";
+            builder1 = new StringBuilder(hpName).append("(FastMove.").append(hpName).append(")");
+            if (!type.equals(Type.values().length - 1)) {
+              builder1.append(",\n\t");
+            } else {
+              builder1.append(";\n");
+            }
+            writer.print(builder1);
+          }
         }
-
-        writer.print(builder1);
       }
 
       writer.print("\n\tprivate enum FastMove {\n");
 
+      // write each fast move with stats
       for (int writeCounter = 1;
           writeCounter < MovesFastUtility.getMoveNum().size();
           writeCounter++) {
-        BigDecimal bdDPT =
-            (BigDecimal.valueOf(MovesFastUtility.getPvpPower().get(writeCounter)))
-                .divide(
-                    BigDecimal.valueOf(MovesFastUtility.getPvpTurns().get(writeCounter)),
-                    8,
-                    RoundingMode.DOWN);
-        double dpt = bdDPT.doubleValue();
-
-        BigDecimal bdEPT =
-            (BigDecimal.valueOf(MovesFastUtility.getPvpEnergy().get(writeCounter)))
-                .divide(
-                    BigDecimal.valueOf(MovesFastUtility.getPvpTurns().get(writeCounter)),
-                    8,
-                    RoundingMode.DOWN);
-        double ept = bdEPT.doubleValue();
-
-        BigDecimal bdDPEEPT = bdDPT.multiply(bdEPT);
-        double dptEPT = bdDPEEPT.doubleValue();
-
-        builder1 =
-            new StringBuilder("\n\t" + MovesFastUtility.getMoveName().get(writeCounter))
-                .append("(")
-                .append("\"")
-                .append(MovesFastUtility.getMoveNum().get(writeCounter))
-                .append("\", ")
-                .append("\"")
-                .append(MovesFastUtility.getMoveName().get(writeCounter))
-                .append("\", ")
-                .append("Type.")
-                .append(MovesFastUtility.getMoveType().get(writeCounter))
-                .append(", ")
-                .append(MovesFastUtility.getPvePower().get(writeCounter))
-                .append(", ")
-                .append("(byte) ")
-                .append(MovesFastUtility.getPveEnergy().get(writeCounter))
-                .append(", ")
-                .append(MovesFastUtility.getPveDurationMs().get(writeCounter))
-                .append(", ")
-                .append(MovesFastUtility.getPveDamageWindowStartMs().get(writeCounter))
-                .append(", ")
-                .append(MovesFastUtility.getPveDamageWindowEndMs().get(writeCounter))
-                .append(", ")
-                .append(MovesFastUtility.getPvpPower().get(writeCounter))
-                .append(", ")
-                .append("(byte) ")
-                .append(MovesFastUtility.getPvpEnergy().get(writeCounter))
-                .append(", ")
-                .append("(byte) ")
-                .append(MovesFastUtility.getPvpTurns().get(writeCounter))
-                .append(", ")
-                .append(dpt)
-                .append(", ")
-                .append(ept)
-                .append(", ")
-                .append(dptEPT)
-                .append(")");
-        if (writeCounter != (MovesFastUtility.getMoveNum().size() - 1)) {
-          writer.print(builder1.append(","));
-        } else {
-          writer.print(builder1.append(";\n"));
+        if (!MovesFastUtility.getMoveName().get(writeCounter).equals("HIDDEN_POWER_FAST")) {
+          writeEachFastMove(writeCounter, MovesFastUtility.getMoveType().get(writeCounter));
+        } else if (MovesFastUtility.getMoveName().get(writeCounter).equals("HIDDEN_POWER_FAST")) {
+          for (Type type : Type.values()) {
+            writeEachFastMove(writeCounter, type.getTYPENAME());
+          }
         }
       }
 
@@ -758,8 +756,86 @@ public class WriteFiles {
     }
   }
 
+  public static void writeEachFastMove(Integer writeCounter, String type) {
+    BigDecimal bdDPT =
+        (new BigDecimal(MovesFastUtility.getPvpPower().get(writeCounter).toString()))
+            .divide(
+                new BigDecimal(MovesFastUtility.getPvpTurns().get(writeCounter).toString()),
+                8,
+                RoundingMode.DOWN);
+    double dpt = bdDPT.doubleValue();
+
+    BigDecimal bdEPT =
+        (new BigDecimal(MovesFastUtility.getPvpEnergy().get(writeCounter).toString()))
+            .divide(
+                new BigDecimal(MovesFastUtility.getPvpTurns().get(writeCounter).toString()),
+                8,
+                RoundingMode.DOWN);
+    double ept = bdEPT.doubleValue();
+
+    BigDecimal bdDPEEPT = bdDPT.multiply(bdEPT);
+    double dptEPT = bdDPEEPT.doubleValue();
+
+    if (!MovesFastUtility.getMoveName().get(writeCounter).equals("HIDDEN_POWER_FAST")) {
+      builder1 =
+          new StringBuilder("\n\t" + MovesFastUtility.getMoveName().get(writeCounter))
+              .append("(")
+              .append("\"")
+              .append(MovesFastUtility.getMoveNum().get(writeCounter))
+              .append("\", ")
+              .append("\"")
+              .append(MovesFastUtility.getMoveName().get(writeCounter))
+              .append("\", ");
+    } else if (MovesFastUtility.getMoveName().get(writeCounter).equals("HIDDEN_POWER_FAST")) {
+      String hpName = "HIDDEN_POWER_" + type.substring(13) + "_FAST";
+      builder1 =
+          new StringBuilder("\n\t" + hpName)
+              .append("(")
+              .append("\"")
+              .append(MovesFastUtility.getMoveNum().get(writeCounter))
+              .append("\", ")
+              .append("\"")
+              .append(hpName)
+              .append("\", ");
+    }
+    builder1
+        .append("Type.")
+        .append(type)
+        .append(", ")
+        .append(MovesFastUtility.getPvePower().get(writeCounter))
+        .append(", ")
+        .append("(byte) ")
+        .append(MovesFastUtility.getPveEnergy().get(writeCounter))
+        .append(", ")
+        .append(MovesFastUtility.getPveDurationMs().get(writeCounter))
+        .append(", ")
+        .append(MovesFastUtility.getPveDamageWindowStartMs().get(writeCounter))
+        .append(", ")
+        .append(MovesFastUtility.getPveDamageWindowEndMs().get(writeCounter))
+        .append(", ")
+        .append(MovesFastUtility.getPvpPower().get(writeCounter))
+        .append(", ")
+        .append("(byte) ")
+        .append(MovesFastUtility.getPvpEnergy().get(writeCounter))
+        .append(", ")
+        .append("(byte) ")
+        .append(MovesFastUtility.getPvpTurns().get(writeCounter))
+        .append(", ")
+        .append(dpt)
+        .append(", ")
+        .append(ept)
+        .append(", ")
+        .append(dptEPT)
+        .append(")");
+    if (writeCounter != (MovesFastUtility.getMoveNum().size() - 1)) {
+      writer.print(builder1.append(","));
+    } else {
+      writer.print(builder1.append(";\n"));
+    }
+  }
+
   // write Types
-  public static void writeTypeEnum(ArrayList<TypeUtility> typeUtilityList) {
+  public static void writeTypeEnum(List<TypeUtility> typeUtilityList) {
     try {
       PrintWriter writer = new PrintWriter("src\\pokemans\\core\\Type.java");
 
@@ -930,28 +1006,48 @@ public class WriteFiles {
               + "\n\ninterface CPMultiplier {\n");
 
       // write main enum cpMultiplier
-      writer.print("\n\tBigDecimal[] levels = {");
+      writer.print("\n\tstatic final BigDecimal[] levels = {");
       BigDecimal two = new BigDecimal("2");
 
+      int indexCounter = 0;
       for (int i = 0; i < cpMultiplier.size(); i++) {
         builder1 =
             new StringBuilder("\n\t\tnew BigDecimal(\"").append(cpMultiplier.get(i)).append("\")");
         if (i != cpMultiplier.size() - 1) {
-          writer.print(builder1.append(",\t// ").append((i + 1)));
+          writer.print(
+              builder1
+                  .append(",\t// index [")
+                  .append(indexCounter)
+                  .append("], level ")
+                  .append((i + 1)));
         } else {
-          writer.print(builder1.append("};\t// ").append((i + 1)));
+          writer.print(
+              builder1
+                  .append("};\t// index [")
+                  .append(indexCounter)
+                  .append("], level ")
+                  .append((i + 1)));
           break;
         }
-        builder1 =
-            new StringBuilder("\n\t\tnew BigDecimal(\"")
-                .append(
-                    ((cpMultiplier.get(i).multiply(cpMultiplier.get(i + 1)))
-                        .divide(two)
-                        .setScale(8, RoundingMode.DOWN)))
-                .append("\")");
+
+        // for half-level
+        BigDecimal halfLevel =
+            (((new BigDecimal(String.valueOf(cpMultiplier.get(i))))
+                        .add(new BigDecimal(String.valueOf(cpMultiplier.get(i + 1)))))
+                    .divide(two))
+                .setScale(8, RoundingMode.DOWN);
+        builder1 = new StringBuilder("\n\t\tnew BigDecimal(\"").append(halfLevel).append("\")");
         if (i != cpMultiplier.size() - 1) {
-          writer.print(builder1.append(",\t// ").append(i + 1).append(".5"));
+          writer.print(
+              builder1
+                  .append(",\t// index [")
+                  .append(indexCounter)
+                  .append("], level ")
+                  .append(i + 1)
+                  .append(".5"));
+          indexCounter++;
         }
+        indexCounter++;
       }
 
       writer.print("\n}");
@@ -981,16 +1077,115 @@ public class WriteFiles {
           writer.print(
               "\n\tstatic final BigDecimal "
                   + key
-                  + " = new BigDecimal("
+                  + " = new BigDecimal(\""
                   + battleMultipliers.get(key)
-                  + ");");
+                  + "\");");
         } else {
           writer.print(
               "\n\tstatic final BigDecimal weather"
                   + key
-                  + " = new BigDecimal("
+                  + " = new BigDecimal(\""
                   + battleMultipliers.get(key)
-                  + ");");
+                  + "\");");
+        }
+      }
+
+      writer.print("\n\n}");
+      writer.flush();
+      writer.close();
+    } catch (FileNotFoundException e) {
+      e.printStackTrace();
+    }
+  }
+
+  // write battle multiplier interface
+  public static void writeCombatMultipliers(
+      TreeMap<String, Double> combatMultipliers,
+      TreeMap<String, List<Double>> combatStageMultipliers) {
+    try {
+      PrintWriter writer = new PrintWriter("src\\pokemans\\engine\\CombatMultipliers.java");
+
+      writer.print(
+          "/*\n * Copyright (c) 2020, Derek Fawcett. All rights reserved. "
+              + "No usage without permission. */\n\n\t// **This file is auto-generated** "
+              + "\n\npackage pokemans.engine;\n"
+              + "\nimport java.math.BigDecimal;"
+              + "\n\ninterface CombatMultipliers {\n");
+
+      Set<String> keys = combatMultipliers.keySet();
+      for (String key : keys) {
+        writer.print(
+            "\n\tstatic final BigDecimal "
+                + key
+                + " = new BigDecimal(\""
+                + combatMultipliers.get(key)
+                + "\");");
+      }
+
+      Set<String> keysStages = combatStageMultipliers.keySet();
+      for (String key : keysStages) {
+        if (!key.equals("attackBuffMultiplier") && !key.equals("defenseBuffMultiplier")) {
+          writer.print(
+              "\n\tstatic final BigDecimal "
+                  + key
+                  + " = new BigDecimal(\""
+                  + combatStageMultipliers.get(key).toString().replace("[", "").replace("]", "")
+                  + "\");");
+        } else {
+          writer.print("\n\tstatic final BigDecimal[] " + key + " = {");
+          for (Double values : combatStageMultipliers.get(key)) {
+            StringBuilder builder1 =
+                new StringBuilder("new BigDecimal(\"")
+                    .append(values.toString().replace("[", "").replace("]", ""))
+                    .append("\")");
+
+            if (!values.equals(
+                combatStageMultipliers.get(key).get(combatStageMultipliers.get(key).size() - 1))) {
+              builder1.append(", ");
+            } else {
+              builder1.append("}; ");
+            }
+            writer.print(builder1);
+          }
+        }
+      }
+
+      writer.print("\n\n}");
+      writer.flush();
+      writer.close();
+    } catch (FileNotFoundException e) {
+      e.printStackTrace();
+    }
+  }
+
+  // write battle multiplier interface
+  public static void writeWeatherMultipliers(TreeMap<String, Double> weatherMultipliers) {
+    try {
+      PrintWriter writer = new PrintWriter("src\\pokemans\\engine\\WeatherMultipliers.java");
+
+      writer.print(
+          "/*\n * Copyright (c) 2020, Derek Fawcett. All rights reserved. "
+              + "No usage without permission. */\n\n\t// **This file is auto-generated** "
+              + "\n\npackage pokemans.engine;\n"
+              + "\nimport java.math.BigDecimal;"
+              + "\n\ninterface WeatherMultipliers {\n");
+
+      Set<String> keys = weatherMultipliers.keySet();
+      for (String key : keys) {
+        if (!key.equals("attackBonusMultiplier")) {
+          writer.print(
+              "\n\tstatic final BigDecimal "
+                  + key
+                  + " = new BigDecimal(\""
+                  + weatherMultipliers.get(key)
+                  + "\");");
+        } else {
+          writer.print(
+              "\n\tstatic final BigDecimal weather"
+                  + key
+                  + " = new BigDecimal(\""
+                  + weatherMultipliers.get(key)
+                  + "\");");
         }
       }
 
@@ -1009,10 +1204,11 @@ public class WriteFiles {
       // extract substring to avoid problems with escape characters
       String justFileName = fileName.substring(14, 42);
 
+      // writer.print(
       String string0 =
           "/*\n"
-              + "  Copyright (c) 2020, My Name. All rights reserved. No usage without permission.\n"
-              + " */\n"
+              + " Copyright (c) 2020, My Name. All rights reserved. No usage without permission.\n"
+              + "*/\n"
               + "\n"
               + "package pokemans.utilities.read;\n"
               + "\n"
@@ -1028,125 +1224,122 @@ public class WriteFiles {
               + "\n"
               + "public class GameMasterCheck {\n"
               + "\n"
-              + "    // set date format pattern\n"
-              + "    private static final DateTimeFormatter timeStampPattern = DateTimeFormatter.ofPattern(\"yyyyMMdd\");\n"
+              + "  // set date format pattern\n"
+              + "  private static final DateTimeFormatter timeStampPattern = DateTimeFormatter.ofPattern(\"yyyyMMdd\");\n"
               + "\n"
-              + "    public static String checkFile() {\n"
-              + "        String existingFileName = \"src\\\\dataFiles\\\\";
-
-      // justFileName;
-
+              + "  public static String checkFile(String gameMasterURL) {\n"
+              + "    String existingFileName = \"src\\\\dataFiles\\\\";
       String string1 =
           "\";\n"
-              + "        try {\n"
-              + "            File tmpDir = new File(existingFileName);\n"
-              + "            boolean fileExists = tmpDir.exists();\n"
+              + "    try {\n"
+              + "      File tmpDir = new File(existingFileName);\n"
+              + "      boolean fileExists = tmpDir.exists();\n"
               + "\n"
-              + "            // check # of days between current date and date from game master\n"
-              + "            long noOfDaysBetween = calculateDaysBetween(existingFileName);\n"
-              + "            if (noOfDaysBetween > 1) {\n"
-              + "                ZoneId americaNY = ZoneId.of(\"America/New_York\");\n"
-              + "                String newFileName = (timeStampPattern.format(java.time.LocalDateTime.now(americaNY)));\n"
-              + "                newFileName = \"src\\\\dataFiles\\\\GAME_MASTER_V2_\" + newFileName + \".json\";\n"
+              + "      // check # of days between current date and date from game master\n"
+              + "      long noOfDaysBetween = calculateDaysBetween(existingFileName);\n"
+              + "      if (noOfDaysBetween > 1) {\n"
+              + "        ZoneId americaNY = ZoneId.of(\"America/New_York\");\n"
+              + "        String newFileName = (timeStampPattern.format(java.time.LocalDateTime.now(americaNY)));\n"
+              + "        newFileName = \"src\\\\dataFiles\\\\GAME_MASTER_V2_\" + newFileName + \".json\";\n"
               + "\n"
-              + "                MessageDigest md = MessageDigest.getInstance(\"MD5\");\n"
+              + "        MessageDigest md = MessageDigest.getInstance(\"MD5\");\n"
               + "\n"
-              + "                String hexFile = \"\", hexURL = \"\";\n"
-              + "                String gameMasterUrl = \"https://raw.githubusercontent.com/pokemongo-dev-contrib/pokemongo-game-master/\" +\n"
-              + "                        \"master/versions/latest/GAME_MASTER.json\";\n"
+              + "        String hexFile = \"\", hexURL = \"\";\n"
               + "\n"
-              + "                // if no game master currently exists, create file\n"
-              + "                if (!fileExists) {\n"
-              + "                    writeNewFile(fileExists, gameMasterUrl, existingFileName, newFileName);\n"
-              + "                } else {\n"
-              + "                    hexFile = checksumFile(existingFileName, md);\n"
-              + "                    hexURL = checksumURL(gameMasterUrl, md);\n"
+              + "        // if no game master currently exists, create file\n"
+              + "        if (!fileExists) {\n"
+              + "          writeNewFile(fileExists, gameMasterURL, existingFileName, newFileName);\n"
+              + "        } else {\n"
+              + "          hexFile = checksumFile(existingFileName, md);\n"
+              + "          hexURL = checksumURL(gameMasterURL, md);\n"
               + "\n"
-              + "                    // if checksums are different, overwrite file\n"
-              + "                    if (!hexFile.equals(hexURL)) {\n"
-              + "                        writeNewFile(fileExists, gameMasterUrl, existingFileName, newFileName);\n"
-              + "                        return newFileName;\n"
-              + "                    }\n"
-              + "                }\n"
-              + "            }\n"
-              + "        } catch (NoSuchAlgorithmException e) {\n"
-              + "            e.printStackTrace();\n"
+              + "          // if checksums are different, overwrite file\n"
+              + "          if (!hexFile.equals(hexURL)) {\n"
+              + "            writeNewFile(fileExists, gameMasterURL, existingFileName, newFileName);\n"
+              + "            return newFileName;\n"
+              + "          }\n"
               + "        }\n"
-              + "        return existingFileName;\n"
+              + "      }\n"
+              + "    } catch (NoSuchAlgorithmException e) {\n"
+              + "      e.printStackTrace();\n"
               + "    }\n"
+              + "    // JOptionPane.showMessageDialog(null, \"PoGo Game Master reading complete!\");\n"
+              + "    return existingFileName;\n"
+              + "  }\n"
               + "\n"
-              + "    private static String checksumFile(String fileName, MessageDigest md) {\n"
-              + "        StringBuilder result = new StringBuilder();\n"
-              + "        int nread;\n"
-              + "        byte[] buffer = new byte[1024];\n"
+              + "  private static String checksumFile(String fileName, MessageDigest md) {\n"
+              + "    StringBuilder result = new StringBuilder();\n"
+              + "    int nread;\n"
+              + "    byte[] buffer = new byte[1024];\n"
               + "\n"
-              + "        try (InputStream fis = new FileInputStream(fileName)) {\n"
-              + "            while ((nread = fis.read(buffer)) != -1) {\n"
-              + "                md.update(buffer, 0, nread);\n"
-              + "            }\n"
-              + "        } catch (IOException e) {\n"
-              + "            e.printStackTrace();\n"
-              + "        }\n"
-              + "        // bytes to hex\n"
-              + "        for (byte b : md.digest()) {\n"
-              + "            result.append(String.format(\"%02x\", b));\n"
-              + "        }\n"
-              + "        return result.toString();\n"
+              + "    try (InputStream fis = new FileInputStream(fileName)) {\n"
+              + "      while ((nread = fis.read(buffer)) != -1) {\n"
+              + "        md.update(buffer, 0, nread);\n"
+              + "      }\n"
+              + "    } catch (IOException e) {\n"
+              + "      e.printStackTrace();\n"
               + "    }\n"
-              + "\n"
-              + "    private static String checksumURL(String fileName, MessageDigest md) {\n"
-              + "        StringBuilder result = new StringBuilder();\n"
-              + "        int nread;\n"
-              + "        byte[] buffer = new byte[1024];\n"
-              + "\n"
-              + "        try (InputStream urlis = new URL(fileName).openStream()) {\n"
-              + "            while ((nread = urlis.read(buffer)) != -1) {\n"
-              + "                md.update(buffer, 0, nread);\n"
-              + "            }\n"
-              + "        } catch (IOException e) {\n"
-              + "            e.printStackTrace();\n"
-              + "        }\n"
-              + "        // bytes to hex\n"
-              + "        for (byte b : md.digest()) {\n"
-              + "            result.append(String.format(\"%02x\", b));\n"
-              + "        }\n"
-              + "        return result.toString();\n"
+              + "    // bytes to hex\n"
+              + "    for (byte b : md.digest()) {\n"
+              + "      result.append(String.format(\"%02x\", b));\n"
               + "    }\n"
+              + "    return result.toString();\n"
+              + "  }\n"
               + "\n"
-              + "    private static long calculateDaysBetween(String fileName) {\n"
-              + "        // extract date string from current game master file name\n"
-              + "        String dateFromFileName;\n"
-              + "        dateFromFileName = fileName.substring(29, 37);\n"
-              + "        LocalDate currentDate = LocalDate.now();\n"
-              + "        // set LocalDate from \"dateFromFileName\"\n"
-              + "        LocalDate dateFromCurrentGameMaster = LocalDate.parse(dateFromFileName, timeStampPattern);\n"
+              + "  private static String checksumURL(String fileName, MessageDigest md) {\n"
+              + "    StringBuilder result = new StringBuilder();\n"
+              + "    int nread;\n"
+              + "    byte[] buffer = new byte[1024];\n"
               + "\n"
-              + "        // calculate days between now and date from game master\n"
-              + "        return DAYS.between(dateFromCurrentGameMaster, currentDate);\n"
+              + "    try (InputStream urlis = new URL(fileName).openStream()) {\n"
+              + "      while ((nread = urlis.read(buffer)) != -1) {\n"
+              + "        md.update(buffer, 0, nread);\n"
+              + "      }\n"
+              + "    } catch (IOException e) {\n"
+              + "      e.printStackTrace();\n"
               + "    }\n"
+              + "    // bytes to hex\n"
+              + "    for (byte b : md.digest()) {\n"
+              + "      result.append(String.format(\"%02x\", b));\n"
+              + "    }\n"
+              + "    return result.toString();\n"
+              + "  }\n"
               + "\n"
-              + "    private static void writeNewFile(boolean fileExists, String gameMasterUrl, String existingFileName, String newFileName) {\n"
-              + "        try (BufferedInputStream in = new BufferedInputStream(new URL(gameMasterUrl).openStream());\n"
-              + "             // new file name\n"
-              + "             FileOutputStream fileOutputStream = new FileOutputStream(newFileName)) {\n"
-              + "            byte[] dataBuffer = new byte[1024];\n"
-              + "            int bytesRead;\n"
-              + "            while ((bytesRead = in.read(dataBuffer, 0, 1024)) != -1) {\n"
-              + "                fileOutputStream.write(dataBuffer, 0, bytesRead);\n"
-              + "            }\n"
-              + "            \n"
-              + "            // delete old/existing file\n"
-              + "            if (fileExists) {\n"
-              + "                File file = new File(existingFileName);\n"
-              + "                if (file.delete()) {\n"
-              + "                    System.out.println(\"\\n\\t\\t**Old Game Master deleted successfully**\\n\");\n"
-              + "                }\n"
-              + "            }\n"
-              + "        } catch (IOException e) {\n"
-              + "            System.out.println(\"\\nGame Master Check IO Exception!\\n\");\n"
-              + "            e.printStackTrace();\n"
+              + "  private static long calculateDaysBetween(String fileName) {\n"
+              + "    // extract date string from current game master file name\n"
+              + "    String dateFromFileName;\n"
+              + "    dateFromFileName = fileName.substring(29, 37);\n"
+              + "    LocalDate currentDate = LocalDate.now();\n"
+              + "    // set LocalDate from \"dateFromFileName\"\n"
+              + "    LocalDate dateFromCurrentGameMaster = LocalDate.parse(dateFromFileName, timeStampPattern);\n"
+              + "\n"
+              + "    // calculate days between now and date from game master\n"
+              + "    return DAYS.between(dateFromCurrentGameMaster, currentDate);\n"
+              + "  }\n"
+              + "\n"
+              + "  private static void writeNewFile(\n"
+              + "      boolean fileExists, String gameMasterUrl, String existingFileName, String newFileName) {\n"
+              + "    try (BufferedInputStream in = new BufferedInputStream(new URL(gameMasterUrl).openStream());\n"
+              + "        // new file name\n"
+              + "        FileOutputStream fileOutputStream = new FileOutputStream(newFileName)) {\n"
+              + "      byte[] dataBuffer = new byte[1024];\n"
+              + "      int bytesRead;\n"
+              + "      while ((bytesRead = in.read(dataBuffer, 0, 1024)) != -1) {\n"
+              + "        fileOutputStream.write(dataBuffer, 0, bytesRead);\n"
+              + "      }\n"
+              + "\n"
+              + "      // delete old/existing file\n"
+              + "      if (fileExists) {\n"
+              + "        File file = new File(existingFileName);\n"
+              + "        if (file.delete()) {\n"
+              + "          System.out.println(\"\\n\\t\\t**Old Game Master deleted successfully**\\n\");\n"
               + "        }\n"
+              + "      }\n"
+              + "    } catch (IOException e) {\n"
+              + "      System.out.println(\"\\nGame Master Check IO Exception!\\n\");\n"
+              + "      e.printStackTrace();\n"
               + "    }\n"
+              + "  }\n"
               + "}";
       builder0 = new StringBuilder(string0).append(justFileName).append(string1);
       writer.print(builder0);

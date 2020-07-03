@@ -3,13 +3,13 @@
  */
 package pokemans.utilities.read;
 
-import java.util.ArrayList;
+import java.util.List;
 
 public class PokeFormsUtility {
   private int formDexNum;
-  private ArrayList<String> formName;
+  private List<String> formName;
 
-  public PokeFormsUtility(int formDexNum, ArrayList<String> formName) {
+  public PokeFormsUtility(int formDexNum, List<String> formName) {
     this.formDexNum = formDexNum;
     this.formName = formName;
   }
@@ -31,11 +31,11 @@ public class PokeFormsUtility {
     this.formDexNum = formDexNum;
   }
 
-  public ArrayList<String> getFormName() {
+  public List<String> getFormName() {
     return formName;
   }
 
-  public void setFormName(ArrayList<String> formName) {
+  public void setFormName(List<String> formName) {
     this.formName = formName;
   }
 }

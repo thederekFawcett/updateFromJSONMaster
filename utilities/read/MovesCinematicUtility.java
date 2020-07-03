@@ -81,7 +81,6 @@ public class MovesCinematicUtility {
         + getPveDamageWindowStartMs().get(counter)
         + "\nPvE Damage Window End ms: "
         + getPveDamageWindowEndMs().get(counter)
-        + "\n"
         + "\nPvP Power: "
         + getPvpPower().get(counter)
         + "\nPvP Energy: "

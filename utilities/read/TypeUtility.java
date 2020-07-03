@@ -4,13 +4,14 @@
 package pokemans.utilities.read;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class TypeUtility {
 
   private String typeEffectivenessName;
-  private ArrayList<Double> effectiveness;
+  private List<Double> effectiveness;
 
-  public TypeUtility(String typeEffectivenessName, ArrayList<Double> effectiveness) {
+  public TypeUtility(String typeEffectivenessName, List<Double> effectiveness) {
     this.typeEffectivenessName = typeEffectivenessName;
     this.effectiveness = effectiveness;
   }
@@ -32,7 +33,7 @@ public class TypeUtility {
     this.typeEffectivenessName = typeEffectivenessName;
   }
 
-  public ArrayList<Double> getEffectiveness() {
+  public List<Double> getEffectiveness() {
     return effectiveness;
   }
 

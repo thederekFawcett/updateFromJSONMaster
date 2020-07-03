@@ -3,25 +3,25 @@
  */
 package pokemans.utilities.read;
 
-import java.util.ArrayList;
+import java.util.List;
 
 public class SmeargleMovesUtility {
 
-  private static ArrayList<String> smeargleQuickMoves, smeargleCinematicMoves;
+  private static List<String> smeargleQuickMoves, smeargleCinematicMoves;
 
-  public static ArrayList<String> getSmeargleQuickMoves() {
+  public static List<String> getSmeargleQuickMoves() {
     return smeargleQuickMoves;
   }
 
-  public static void setSmeargleQuickMoves(ArrayList<String> smeargleQuickMoves) {
+  public static void setSmeargleQuickMoves(List<String> smeargleQuickMoves) {
     SmeargleMovesUtility.smeargleQuickMoves = smeargleQuickMoves;
   }
 
-  public static ArrayList<String> getSmeargleCinematicMoves() {
+  public static List<String> getSmeargleCinematicMoves() {
     return smeargleCinematicMoves;
   }
 
-  public static void setSmeargleCinematicMoves(ArrayList<String> smeargleCinematicMoves) {
+  public static void setSmeargleCinematicMoves(List<String> smeargleCinematicMoves) {
     SmeargleMovesUtility.smeargleCinematicMoves = smeargleCinematicMoves;
   }
 }

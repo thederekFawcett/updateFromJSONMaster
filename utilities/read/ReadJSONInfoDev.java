@@ -14,7 +14,7 @@ import java.util.TreeMap;
 
 import static java.lang.Integer.parseInt;
 
-public class ReadJSONInfo {
+public class ReadJSONInfoDev {
   // functionality
   private static int extractNumber(String str) {
     // Remove every non-digit number
@@ -38,48 +38,24 @@ public class ReadJSONInfo {
   private static <E> E readObjectDependingOnInput(
       JSONObject objectData, String stat, Class<E> type) {
     if (type == Double.class) {
-      double doubleRead;
-
-      doubleRead = (Double) objectData.get(stat);
-      return type.cast(doubleRead);
+      return type.cast(objectData.get(stat));
 
     } else if (type == Integer.class) {
-      long longRead;
-      int intRead;
+      long longRead = (Long) objectData.get(stat);
+      return type.cast((int) longRead);
 
-      longRead = (Long) objectData.get(stat);
-      intRead = (int) longRead;
-      return type.cast(intRead);
+    } else if (type == Long.class) {
+      return type.cast(objectData.get(stat));
 
     } else {
-      long longRead;
-      byte byteRead;
-
-      longRead = (Long) objectData.get(stat);
-      byteRead = (byte) longRead;
-      return type.cast(byteRead);
+      long longRead = (Long) objectData.get(stat);
+      return type.cast((byte) longRead);
     }
   }
 
-  static ArrayList<String> readArray(JSONObject arrayObject, String arrayKey) {
-    ArrayList<String> contents = new ArrayList<>();
-    if (!(arrayKey.equals("empty"))) {
-      JSONArray arrayContents = (JSONArray) arrayObject.get(arrayKey);
-      contents.addAll(arrayContents);
-    } else {
-      contents.add("");
-    }
-    return contents;
-  }
-
-  private static ArrayList<String> readKeysInArray(JSONObject arrayObject, String keyValueNeeded) {
-    ArrayList<String> contents = new ArrayList<>();
-    JSONArray array = (JSONArray) arrayObject.get(keyValueNeeded);
-    for (Object o : array) {
-      JSONObject jsonObject = (JSONObject) o;
-      contents.add((String) jsonObject.get("form"));
-    }
-    return contents;
+  static List<String> readArray(JSONObject arrayObject, String arrayKey) {
+    JSONArray arrayContents = (JSONArray) arrayObject.get(arrayKey);
+    return new ArrayList<>(arrayContents);
   }
 
   public static boolean isBetween(int x, int lower, int upper) {
@@ -88,20 +64,21 @@ public class ReadJSONInfo {
 
   // read pokemans
   static void readPokeInfo(
-      JSONObject objectData, String duplicateCheck, ArrayList<PokemonUtility> pokemonUtilityList) {
+      JSONObject objectData, String duplicateCheck, List<PokemonUtility> pokemonUtilityList) {
     boolean isLastInPoGoGen = false;
     String myPokeForm, myPokeName, myPokeFamily;
     int myGenNum = 0;
-    ArrayList<String> myPokeType = new ArrayList<>(),
+    List<String> myPokeType = new ArrayList<>(),
         myPokeQuickMoves = new ArrayList<>(),
         myPokeCinematicMoves = new ArrayList<>(),
         myPokeEliteQuickMoves = new ArrayList<>(),
         myPokeEliteCinematicMoves = new ArrayList<>(),
         myPokeMovesShadowCinematic = new ArrayList<>(),
         myPokeMovesPurifiedCinematic = new ArrayList<>();
-    JSONObject stats = (JSONObject) objectData.get("stats");
-
+    myPokeFamily = (String) objectData.get("familyId");
     int intMyDexNum = extractNumber(duplicateCheck);
+
+    JSONObject stats = (JSONObject) objectData.get("stats");
 
     if (isBetween(intMyDexNum, 1, 151)) { // gen1
       myGenNum = 1;
@@ -143,9 +120,10 @@ public class ReadJSONInfo {
     if (objectData.containsKey("type2")) {
       myPokeType.add((String) objectData.get("type2"));
     }
-
-    if (objectData.containsKey("quickMoves") || objectData.containsKey("cinematicMoves")) {
+    if (objectData.containsKey("quickMoves")) {
       myPokeQuickMoves.addAll(0, readArray(objectData, "quickMoves"));
+    }
+    if (objectData.containsKey("cinematicMoves")) {
       myPokeCinematicMoves.addAll(0, readArray(objectData, "cinematicMoves"));
     }
     if (intMyDexNum == 235) {
@@ -163,8 +141,6 @@ public class ReadJSONInfo {
       myPokeMovesShadowCinematic.add((String) shadowData.get("shadowChargeMove"));
       myPokeMovesPurifiedCinematic.add((String) shadowData.get("purifiedChargeMove"));
     }
-
-    myPokeFamily = (String) objectData.get("familyId");
 
     String stringMyDexNum = String.valueOf(intMyDexNum);
     String stringMyGenNum = String.valueOf(myGenNum);
@@ -266,8 +242,13 @@ public class ReadJSONInfo {
       MovesFastUtility.setPvpEnergy((byte) 0);
     }
     if (objectData.containsKey("durationTurns")) {
-      MovesFastUtility.setPvpTurns(
-          readObjectDependingOnInput(objectData, "durationTurns", Byte.class));
+      if (!objectData.get("uniqueId").equals("TRANSFORM_FAST")) {
+        MovesFastUtility.setPvpTurns(
+            (byte) (readObjectDependingOnInput(objectData, "durationTurns", Byte.class) + 1));
+      } else {
+        MovesFastUtility.setPvpTurns(
+            (byte) (readObjectDependingOnInput(objectData, "durationTurns", Byte.class) + 4));
+      }
     } else {
       MovesFastUtility.setPvpTurns((byte) 1);
     }
@@ -275,71 +256,68 @@ public class ReadJSONInfo {
 
   static int readToMoveClassCinematicPve(
       JSONObject objectData, String duplicateCheck, int movesCounter) {
-    if (MovesCinematicUtility.getMoveNum().contains(extractNumber(duplicateCheck)))
-      ;
-    {
-      if (objectData.containsKey("power")) {
-        MovesCinematicUtility.setPvePower(
-            readObjectDependingOnInput(objectData, "power", Double.class));
-      } else {
-        MovesCinematicUtility.setPvePower(0.0);
-      }
-      if (objectData.containsKey("energyDelta")) {
-        MovesCinematicUtility.setPveEnergy(
-            readObjectDependingOnInput(objectData, "energyDelta", Byte.class));
-      } else {
-        MovesCinematicUtility.setPveEnergy((byte) 0);
-      }
-      MovesCinematicUtility.setPveDurationMs(
-          readObjectDependingOnInput(objectData, "durationMs", Integer.class));
-      MovesCinematicUtility.setPveDamageWindowStartMs(
-          readObjectDependingOnInput(objectData, "damageWindowStartMs", Integer.class));
-      MovesCinematicUtility.setPveDamageWindowEndMs(
-          readObjectDependingOnInput(objectData, "damageWindowEndMs", Integer.class));
-
-      movesCounter++;
-      return movesCounter;
+    // if (MovesCinematicUtility.getMoveNum().contains(extractNumber(duplicateCheck))) {
+    if (objectData.containsKey("power")) {
+      MovesCinematicUtility.setPvePower(
+          readObjectDependingOnInput(objectData, "power", Double.class));
+    } else {
+      MovesCinematicUtility.setPvePower(0.0);
     }
+    if (objectData.containsKey("energyDelta")) {
+      MovesCinematicUtility.setPveEnergy(
+          readObjectDependingOnInput(objectData, "energyDelta", Byte.class));
+    } else {
+      MovesCinematicUtility.setPveEnergy((byte) 0);
+    }
+    MovesCinematicUtility.setPveDurationMs(
+        readObjectDependingOnInput(objectData, "durationMs", Integer.class));
+    MovesCinematicUtility.setPveDamageWindowStartMs(
+        readObjectDependingOnInput(objectData, "damageWindowStartMs", Integer.class));
+    MovesCinematicUtility.setPveDamageWindowEndMs(
+        readObjectDependingOnInput(objectData, "damageWindowEndMs", Integer.class));
+
+    movesCounter++;
+    return movesCounter;
+    // }
+    // return movesCounter;
   }
 
   static int readToMoveClassFastPve(
       JSONObject objectData, String duplicateCheck, int movesCounter) {
-    if (MovesFastUtility.getMoveNum().contains(extractNumber(duplicateCheck)))
-      ;
-    {
-      if (objectData.containsKey("power")) {
-        MovesFastUtility.setPvePower(readObjectDependingOnInput(objectData, "power", Double.class));
-      } else {
-        MovesFastUtility.setPvePower(0.0);
-      }
-      if (objectData.containsKey("energyDelta")) {
-        MovesFastUtility.setPveEnergy(
-            readObjectDependingOnInput(objectData, "energyDelta", Byte.class));
-      } else {
-        MovesFastUtility.setPveEnergy((byte) 0);
-      }
-      MovesFastUtility.setPveDurationMs(
-          readObjectDependingOnInput(objectData, "durationMs", Integer.class));
-      MovesFastUtility.setPveDamageWindowStartMs(
-          readObjectDependingOnInput(objectData, "damageWindowStartMs", Integer.class));
-      MovesFastUtility.setPveDamageWindowEndMs(
-          readObjectDependingOnInput(objectData, "damageWindowEndMs", Integer.class));
-
-      movesCounter++;
-      return movesCounter;
+    // if (MovesFastUtility.getMoveNum().contains(extractNumber(duplicateCheck))) {
+    if (objectData.containsKey("power")) {
+      MovesFastUtility.setPvePower(readObjectDependingOnInput(objectData, "power", Double.class));
+    } else {
+      MovesFastUtility.setPvePower(0.0);
     }
+    if (objectData.containsKey("energyDelta")) {
+      MovesFastUtility.setPveEnergy(
+          readObjectDependingOnInput(objectData, "energyDelta", Byte.class));
+    } else {
+      MovesFastUtility.setPveEnergy((byte) 0);
+    }
+    MovesFastUtility.setPveDurationMs(
+        readObjectDependingOnInput(objectData, "durationMs", Integer.class));
+    MovesFastUtility.setPveDamageWindowStartMs(
+        readObjectDependingOnInput(objectData, "damageWindowStartMs", Integer.class));
+    MovesFastUtility.setPveDamageWindowEndMs(
+        readObjectDependingOnInput(objectData, "damageWindowEndMs", Integer.class));
+
+    movesCounter++;
+    return movesCounter;
+    // }
+    // return movesCounter;
   }
 
   // read forms
   static int readFormsInfo(
       JSONObject objectData,
       String duplicateCheck,
-      ArrayList<PokeFormsUtility> formsList,
+      List<PokeFormsUtility> formsList,
       int formsCouner) {
     if (objectData.containsKey("forms")) {
-      ArrayList<String> formName = new ArrayList<>();
+      List<String> formName = readArray(objectData, "forms");
       int formDexNum = extractNumber(duplicateCheck);
-      formName.addAll(0, readKeysInArray(objectData, "forms"));
       formsList.add(new PokeFormsUtility(formDexNum, formName));
     }
 
@@ -348,48 +326,68 @@ public class ReadJSONInfo {
   }
 
   // read types
-  static void readTypeInfo(JSONObject objectData, ArrayList<TypeUtility> typeUtilityList) {
+  static void readTypeInfo(JSONObject objectData, List<TypeUtility> typeUtilityList) {
     String type = (String) objectData.get("attackType");
 
     JSONArray arrayContents = (JSONArray) objectData.get("attackScalar");
-    ArrayList<Double> typeEffectiveness = new ArrayList<Double>(arrayContents);
+    List<Double> typeEffectiveness = new ArrayList<Double>(arrayContents);
 
     typeUtilityList.add(new TypeUtility(type, typeEffectiveness));
   }
 
   // read player level (cpMultiplier)
   static List<BigDecimal> readCPMultiplier(JSONObject objectData, List<BigDecimal> cpMultiplier) {
-    ArrayList<BigDecimal> localCPMultiplierList = new ArrayList<>();
     JSONArray arrayContents = (JSONArray) objectData.get("cpMultiplier");
-
-    // localCPMultiplierList.addAll(arrayContents);
-    for (int i = 0; i < arrayContents.size(); i++) {
-      localCPMultiplierList.add(BigDecimal.valueOf((Double) arrayContents.get(i)));
-    }
-    return localCPMultiplierList;
+    return new ArrayList<>(arrayContents);
   }
 
   // read battle multipliers
   static TreeMap<String, Double> readBattleMultipliers(
-      JSONObject objectData, TreeMap<String, Double> battleMultipliers) {
-    if (objectData.containsKey("sameTypeAttackBonusMultiplier")) {
-      battleMultipliers.put(
-          "sameTypeAttackBonusMultiplier",
-          (Double) objectData.get("sameTypeAttackBonusMultiplier"));
-      battleMultipliers.put(
-          "shadowPokemonAttackBonusMultiplier",
-          (Double) objectData.get("shadowPokemonAttackBonusMultiplier"));
-      battleMultipliers.put(
-          "shadowPokemonDefenseBonusMultiplier",
-          (Double) objectData.get("shadowPokemonDefenseBonusMultiplier"));
-      battleMultipliers.put(
-          "purifiedPokemonAttackMultiplierVsShadow",
-          (Double) objectData.get("purifiedPokemonAttackMultiplierVsShadow"));
-    } else if (objectData.containsKey("attackBonusMultiplier")) {
-      battleMultipliers.put(
-          "attackBonusMultiplier", (Double) objectData.get("attackBonusMultiplier"));
-    }
+      JSONObject objectData, String duplicateCheck, TreeMap<String, Double> battleMultipliers) {
+    objectData
+        .keySet()
+        .forEach(
+            keyStr -> {
+              if (objectData.get(keyStr).getClass().equals(Double.class)) {
+                battleMultipliers.put(
+                    keyStr.toString(),
+                    readObjectDependingOnInput(objectData, keyStr.toString(), Double.class));
+              } else if (objectData.get(keyStr).getClass().equals(Long.class)) {
+                battleMultipliers.put(
+                    keyStr.toString(),
+                    readObjectDependingOnInput(objectData, keyStr.toString(), Long.class)
+                        .doubleValue());
+              } else if (objectData.get(keyStr).getClass().equals(Byte.class)) {
+                battleMultipliers.put(
+                    keyStr.toString(),
+                    readObjectDependingOnInput(objectData, keyStr.toString(), Byte.class)
+                        .doubleValue());
+              }
+            });
+    return battleMultipliers;
+  }
 
+  // read battle multipliers
+  static TreeMap<String, List<Double>> readCombatStageSettings(
+      JSONObject objectData,
+      String duplicateCheck,
+      TreeMap<String, List<Double>> battleMultipliers) {
+    objectData
+        .keySet()
+        .forEach(
+            keyStr -> {
+              if (objectData.get(keyStr).getClass().equals(Long.class)) {
+                Long minimumStatStage = (Long) objectData.get(keyStr.toString());
+                List<Double> minimumStatStageList = new ArrayList<>();
+                minimumStatStageList.add((double) minimumStatStage);
+                battleMultipliers.put(keyStr.toString(), minimumStatStageList);
+
+              } else {
+                JSONArray arrayContents = (JSONArray) objectData.get(keyStr.toString());
+                List<Double> attackBuffMultiplierList = new ArrayList<>(arrayContents);
+                battleMultipliers.put(keyStr.toString(), attackBuffMultiplierList);
+              }
+            });
     return battleMultipliers;
   }
 }

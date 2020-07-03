@@ -19,8 +19,8 @@ public class GameMasterCheck {
   // set date format pattern
   private static final DateTimeFormatter timeStampPattern = DateTimeFormatter.ofPattern("yyyyMMdd");
 
-  public static String checkFile() {
-    String existingFileName = "src\\dataFiles\\GAME_MASTER_V2_20200624.json";
+  public static String checkFile(String gameMasterURL) {
+    String existingFileName = "src\\dataFiles\\GAME_MASTER_V2_20200703.json";
     try {
       File tmpDir = new File(existingFileName);
       boolean fileExists = tmpDir.exists();
@@ -35,20 +35,17 @@ public class GameMasterCheck {
         MessageDigest md = MessageDigest.getInstance("MD5");
 
         String hexFile = "", hexURL = "";
-        String gameMasterUrl =
-            "https://raw.githubusercontent.com/pokemongo-dev-contrib/pokemongo-game-master/"
-                + "master/versions/latest/GAME_MASTER.json";
 
         // if no game master currently exists, create file
         if (!fileExists) {
-          writeNewFile(fileExists, gameMasterUrl, existingFileName, newFileName);
+          writeNewFile(fileExists, gameMasterURL, existingFileName, newFileName);
         } else {
           hexFile = checksumFile(existingFileName, md);
-          hexURL = checksumURL(gameMasterUrl, md);
+          hexURL = checksumURL(gameMasterURL, md);
 
           // if checksums are different, overwrite file
           if (!hexFile.equals(hexURL)) {
-            writeNewFile(fileExists, gameMasterUrl, existingFileName, newFileName);
+            writeNewFile(fileExists, gameMasterURL, existingFileName, newFileName);
             return newFileName;
           }
         }
@@ -56,6 +53,7 @@ public class GameMasterCheck {
     } catch (NoSuchAlgorithmException e) {
       e.printStackTrace();
     }
+    // JOptionPane.showMessageDialog(null, "PoGo Game Master reading complete!");
     return existingFileName;
   }
 
